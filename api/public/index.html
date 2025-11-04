@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Employee Feedback Portal</title>
+    <style>
+        :root {
+            --primary: #0077ff;
+            --accent: #00c6ff;
+            --bg: linear-gradient(135deg, #dfe9f3 0%, #ffffff 100%);
+            --card-bg: #ffffff;
+            --border: #e3e3e3;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 32px 40px;
+            margin: 40px 0;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 4px;
+            color: #111;
+            margin-top: 32px;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 12px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            margin-top: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--accent);
+        }
+
+        pre {
+            background: #f6f8fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Employee Feedback Portal</h1>
+
+    <h2>Submit Feedback</h2>
+    <label>User ID</label>
+    <input id="userId" placeholder="emp_123" />
+    <label>Message</label>
+    <textarea id="message" rows="4" placeholder="Your feedback..."></textarea>
+    <button id="submitBtn">Submit Feedback</button>
+    <pre id="submitResult"></pre>
+
+    <h2>Admin Feedback List</h2>
+    <label>Admin Key</label>
+    <input id="adminKey" placeholder="supersecretadminkey" />
+    <label>Page</label>
+    <input id="page" type="number" value="1" />
+    <label>Page Size</label>
+    <input id="pageSize" type="number" value="5" />
+    <button id="listBtn">Load Feedback</button>
+    <pre id="listResult"></pre>
+
+    <div class="footer">
+        Made with ❤️ using Node.js, Express & Docker
+    </div>
+</div>
+
+<script>
+    const api = (path, options={}) =>
+        fetch(path, options).then(r => r.json()).catch(e => ({ error: String(e) }));
+
+    document.getElementById('submitBtn').onclick = async () => {
+        const body = {
+            userId: document.getElementById('userId').value.trim(),
+            message: document.getElementById('message').value.trim()
+        };
+        const res = await api('/feedback', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+        });
+        document.getElementById('submitResult').textContent = JSON.stringify(res,null,2);
+    };
+
+    document.getElementById('listBtn').onclick = async () => {
+        const key = document.getElementById('adminKey').value.trim();
+        const page = document.getElementById('page').value;
+        const pageSize = document.getElementById('pageSize').value;
+        const res = await fetch(`/admin/feedback?page=${page}&pageSize=${pageSize}`, {
+            headers: {'x-admin-key': key}
+        }).then(r=>r.json());
+        document.getElementById('listResult').textContent = JSON.stringify(res,null,2);
+    };
+</script>
+</body>
+</html>

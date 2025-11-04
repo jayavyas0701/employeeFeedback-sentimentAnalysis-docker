@@ -1,0 +1,19 @@
+{
+  "name": "employee-feedback-api",
+  "version": "1.0.0",
+  "description": "Tiny feedback API for interview-style demo",
+  "main": "server.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0"
+  }
+}
