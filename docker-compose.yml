@@ -1,41 +1,38 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
-    container_name: empportal_db
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: portal
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - ./db:/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d portal"]
-      interval: 3s
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 30
 
   api:
-    build: ./api
-    container_name: empportal_api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: app
-      DB_PASSWORD: app
-      DB_DATABASE: portal
-      ADMIN_API_KEY: supersecretadminkey   # simple admin auth for demo
     ports:
-      - "3000:3000"
-    restart: unless-stopped
+      - "8080:8080"
 
-volumes:
-  dbdata:
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      BATCH_SIZE: 100
+    depends_on:
+      db:
+        condition: service_healthy

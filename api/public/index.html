@@ -1,161 +1,218 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
     <meta charset="utf-8" />
-    <title>Employee Feedback Portal</title>
+    <title>Employee Feedback – Submit & Review</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         :root {
-            --primary: #0077ff;
-            --accent: #00c6ff;
-            --bg: linear-gradient(135deg, #dfe9f3 0%, #ffffff 100%);
-            --card-bg: #ffffff;
-            --border: #e3e3e3;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --bg: #0b1020;
+            --card: #111934;
+            --muted: #9aa3b2;
+            --text: #e6ebf5;
+            --primary: #6d8dff;
+            --primary-accent: #3b5bff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: rgba(255,255,255,.08);
+            --green-bg:#0c1c18; --green:#34d399;
+            --red-bg:#211016; --red:#f87171;
+            --gray-bg:#1a2032; --gray:#cbd5e1;
         }
-
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: #333;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 800px;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            padding: 32px 40px;
-            margin: 40px 0;
-            border: 1px solid var(--border);
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--primary);
-            font-size: 2rem;
-            margin-bottom: 16px;
-        }
-
-        h2 {
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 4px;
-            color: #111;
-            margin-top: 32px;
-        }
-
-        label {
-            font-weight: 600;
-            display: block;
-            margin-top: 12px;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 15px;
-            box-sizing: border-box;
-            transition: border 0.2s ease;
-        }
-
-        input:focus, textarea:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            margin-top: 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-
-        button:hover {
-            background: var(--accent);
-        }
-
-        pre {
-            background: #f6f8fa;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 13px;
-            color: #666;
-        }
+        *{box-sizing:border-box}
+        body{background:linear-gradient(180deg, #0b1020, #0e1330);margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+        .container{max-width:1100px;margin:32px auto;padding:0 20px}
+        h1{font-weight:800;letter-spacing:.3px;margin:0 0 6px}
+        .subtitle{color:var(--muted);margin-bottom:24px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        @media (max-width: 900px){.grid{grid-template-columns:1fr}}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 18px 14px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+        .card h2{margin:0 0 12px;font-size:18px}
+        label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+        input, textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#0d142b;color:var(--text);outline:none}
+        textarea{min-height:110px;resize:vertical}
+        .row{display:flex;gap:10px;align-items:center;margin-top:12px}
+        .btn{border:none;border-radius:12px;padding:11px 16px;cursor:pointer;font-weight:700;letter-spacing:.2px}
+        .btn.primary{background:var(--primary);color:#081226}
+        .btn.primary:hover{background:var(--primary-accent)}
+        .btn.ghost{background:#0d142b;color:var(--text);border:1px solid var(--border)}
+        .btn.ghost:hover{border-color:#334155}
+        .inline{display:flex;gap:12px;align-items:center}
+        .muted{color:var(--muted);font-size:12px}
+        .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;vertical-align:middle}
+        .pos{background:var(--green-bg);color:var(--green)}
+        .neg{background:var(--red-bg);color:var(--red)}
+        .neu{background:var(--gray-bg);color:var(--gray)}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+        th{color:#cbd5e1;font-weight:700}
+        .toast{position:fixed;right:18px;bottom:18px;background:#0d142b;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none}
+        .toast.show{display:block}
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Employee Feedback Portal</h1>
+    <h1>Employee Feedback</h1>
+    <div class="subtitle">Submit feedback now; review sentiment whenever you’re ready.</div>
 
-    <h2>Submit Feedback</h2>
-    <label>User ID</label>
-    <input id="userId" placeholder="emp_123" />
-    <label>Message</label>
-    <textarea id="message" rows="4" placeholder="Your feedback..."></textarea>
-    <button id="submitBtn">Submit Feedback</button>
-    <pre id="submitResult"></pre>
+    <div class="grid">
+        <!-- Submit card -->
+        <div class="card">
+            <h2>Submit Feedback</h2>
+            <label>User ID</label>
+            <input id="userId" placeholder="e.g., 42" />
 
-    <h2>Admin Feedback List</h2>
-    <label>Admin Key</label>
-    <input id="adminKey" placeholder="supersecretadminkey" />
-    <label>Page</label>
-    <input id="page" type="number" value="1" />
-    <label>Page Size</label>
-    <input id="pageSize" type="number" value="5" />
-    <button id="listBtn">Load Feedback</button>
-    <pre id="listResult"></pre>
+            <label>Message</label>
+            <textarea id="message" placeholder="Share your thoughts…"></textarea>
 
-    <div class="footer">
-        Made with ❤️ using Node.js, Express & Docker
+            <div class="row">
+                <button class="btn primary" id="submitBtn">Submit</button>
+                <span class="muted" id="submitHint">Your message saves instantly. Sentiment is computed by the worker within a few seconds.</span>
+            </div>
+        </div>
+
+        <!-- Admin list card -->
+        <div class="card">
+            <h2>Review & Sentiment</h2>
+            <div class="inline">
+                <div style="flex:1">
+                    <label>Admin Key</label>
+                    <input id="key" value="supersecretadminkey" />
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="btn ghost" id="refreshBtn">Load Feedback</button>
+                </div>
+            </div>
+
+            <div class="inline" style="margin-top:8px">
+                <div>
+                    <label>Page</label>
+                    <input id="page" type="number" value="1" style="width:90px" />
+                </div>
+                <div>
+                    <label>Page Size</label>
+                    <input id="size" type="number" value="5" style="width:110px" />
+                </div>
+                <div class="inline" style="margin-top:18px">
+                    <input type="checkbox" id="auto" />
+                    <label for="auto" style="margin:0">Auto-refresh (5s)</label>
+                </div>
+            </div>
+
+            <div id="tableWrap">
+                <p class="muted" style="margin-top:14px">No data yet. Click “Load Feedback”.</p>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-    const api = (path, options={}) =>
-        fetch(path, options).then(r => r.json()).catch(e => ({ error: String(e) }));
+<div class="toast" id="toast"></div>
 
-    document.getElementById('submitBtn').onclick = async () => {
-        const body = {
-            userId: document.getElementById('userId').value.trim(),
-            message: document.getElementById('message').value.trim()
-        };
-        const res = await api('/feedback', {
+<script>
+    const toast = (msg, ok=true) => {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.borderColor = ok ? 'rgba(16,185,129,.35)' : 'rgba(239,68,68,.35)';
+        t.classList.add('show');
+        setTimeout(()=>t.classList.remove('show'), 2200);
+    };
+
+    const sanitize = (s='') => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    function badge(label, score) {
+        const s = score != null ? Number(score) : NaN;
+        const sc = Number.isFinite(s) ? s.toFixed(2) : '';
+        if (label === 'positive') return `<span class="badge pos">Positive</span>${sc?` <span class="muted">(${sc})</span>`:''}`;
+        if (label === 'negative') return `<span class="badge neg">Negative</span>${sc?` <span class="muted">(${sc})</span>`:''}`;
+        if (label === 'neutral')  return `<span class="badge neu">Neutral</span>${sc?` <span class="muted">(${sc})</span>`:''}`;
+        return `<span class="muted">pending…</span>`;
+    }
+
+    async function submitFeedback() {
+        const userId = document.getElementById('userId').value.trim();
+        const message = document.getElementById('message').value.trim();
+        if (!userId || !message) { toast('Please fill both fields', false); return; }
+
+        const res = await fetch('/feedback', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(body)
+            body: JSON.stringify({ userId, message })
         });
-        document.getElementById('submitResult').textContent = JSON.stringify(res,null,2);
-    };
 
-    document.getElementById('listBtn').onclick = async () => {
-        const key = document.getElementById('adminKey').value.trim();
-        const page = document.getElementById('page').value;
-        const pageSize = document.getElementById('pageSize').value;
-        const res = await fetch(`/admin/feedback?page=${page}&pageSize=${pageSize}`, {
-            headers: {'x-admin-key': key}
-        }).then(r=>r.json());
-        document.getElementById('listResult').textContent = JSON.stringify(res,null,2);
-    };
+        if (!res.ok) {
+            const j = await res.json().catch(()=>({}));
+            toast(j.error || `Submit failed (${res.status})`, false);
+            return;
+        }
+        document.getElementById('message').value = '';
+        toast('Feedback submitted ✅');
+        // optionally refresh list shortly after submit so sentiment appears soon
+        setTimeout(loadList, 1200);
+    }
+
+    function renderTable(json){
+        const rows = json.data || [];
+        if (!rows.length) {
+            document.getElementById('tableWrap').innerHTML =
+                `<p class="muted" style="margin-top:14px">No feedback yet.</p>`;
+            return;
+        }
+        const html = `
+        <table>
+          <thead>
+            <tr><th>User</th><th>Message</th><th>Sentiment</th></tr>
+          </thead>
+          <tbody>
+            ${rows.map(r=>`
+              <tr>
+                <td>
+                  <div>${sanitize(r.userId||'')}</div>
+                  <div class="muted">${r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}</div>
+                </td>
+                <td>${sanitize(r.message||'')}</td>
+                <td>${badge(r.sentiment, r.score)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="muted">Total: ${json.total} • Page ${json.page} of ${Math.max(1, Math.ceil((json.total||0)/(json.pageSize||1)))} </div>
+      `;
+        document.getElementById('tableWrap').innerHTML = html;
+    }
+
+    async function loadList(){
+        const key  = document.getElementById('key').value.trim();
+        const page = Number(document.getElementById('page').value || 1);
+        const size = Number(document.getElementById('size').value || 5);
+        const res = await fetch(`/admin/feedback?page=${page}&pageSize=${size}`, {
+            headers: { 'x-admin-key': key }
+        });
+        if (!res.ok){
+            document.getElementById('tableWrap').innerHTML =
+                `<p class="muted">Error ${res.status} – check your admin key.</p>`;
+            return;
+        }
+        const json = await res.json();
+        renderTable(json);
+    }
+
+    // auto-refresh handler
+    let timer = null;
+    function toggleAuto(){
+        const auto = document.getElementById('auto').checked;
+        clearInterval(timer);
+        if (auto) timer = setInterval(loadList, 5000);
+    }
+
+    // events
+    document.getElementById('submitBtn').addEventListener('click', submitFeedback);
+    document.getElementById('refreshBtn').addEventListener('click', loadList);
+    document.getElementById('auto').addEventListener('change', toggleAuto);
+
+    // initial load
+    loadList().catch(console.error);
 </script>
 </body>
 </html>

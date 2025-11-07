@@ -7,52 +7,39 @@ import pkg from "pg";
 
 const { Pool } = pkg;
 
-// --- env ---
-const {
-    PORT = 3000,
-    DB_HOST = "localhost",
-    DB_PORT = "5432",
-    DB_USER = "app",
-    DB_PASSWORD = "app",
-    DB_DATABASE = "portal",
-    ADMIN_API_KEY = "supersecretadminkey",
-} = process.env;
-
-// --- db pool ---
+// --- Connect to Postgres in Docker ---
 const pool = new Pool({
-    host: DB_HOST,
-    port: Number(DB_PORT),
-    user: DB_USER,
-    password: DB_PASSWORD,
-    database: DB_DATABASE,
+    host: "db", // docker-compose service name
+    port: 5432,
+    user: "postgres",
+    password: "postgres",
+    database: "postgres",
 });
 
-// create table on boot (simple “migration” for demo)
+// --- Ensure schema on startup ---
 async function ensureSchema() {
+    for (let i = 0; i < 15; i++) {
+        try {
+            await pool.query("SELECT 1");
+            break;
+        } catch {
+            console.log("Waiting for DB…");
+            await new Promise((r) => setTimeout(r, 1000));
+        }
+    }
+
     await pool.query(`
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
     CREATE TABLE IF NOT EXISTS feedback (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id TEXT NOT NULL,
       message TEXT NOT NULL,
+      sentiment JSONB,
+      sentiment_version TEXT,
+      sentiment_updated_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-  `).catch(async (e) => {
-        // if pgcrypto not available for gen_random_uuid, enable extension:
-        const msg = `${e}`;
-        if (msg.includes("function gen_random_uuid()")) {
-            await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
-            await pool.query(`
-        CREATE TABLE IF NOT EXISTS feedback (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id TEXT NOT NULL,
-          message TEXT NOT NULL,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-      `);
-        } else {
-            throw e;
-        }
-    });
+  `);
 }
 
 const app = express();
@@ -62,7 +49,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(morgan("dev"));
 
-// --- validation ---
+// --- validation schema ---
 const SubmitSchema = z.object({
     userId: z.string().min(1, "userId required"),
     message: z.string().min(1).max(2000),
@@ -70,55 +57,81 @@ const SubmitSchema = z.object({
 
 // --- routes ---
 
-// health
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
-// POST /feedback  { userId, message }
+// POST /feedback
 app.post("/feedback", async (req, res) => {
     try {
-        const body = SubmitSchema.parse(req.body);
-        const { userId, message } = body;
-
+        const { userId, message } = SubmitSchema.parse(req.body);
         const { rows } = await pool.query(
-            "INSERT INTO feedback (user_id, message) VALUES ($1, $2) RETURNING id, created_at",
+            `INSERT INTO feedback (user_id, message)
+             VALUES ($1, $2)
+                 RETURNING id, created_at`,
             [userId, message]
         );
-
         res.status(201).json({
             id: rows[0].id,
             createdAt: rows[0].created_at,
         });
     } catch (e) {
-        if (e?.issues) {
+        if (e?.issues)
             return res.status(400).json({ error: "validation_error", details: e.issues });
-        }
         console.error(e);
         res.status(500).json({ error: "server_error" });
     }
 });
 
-// GET /admin/feedback?page=1&pageSize=10
-// simple admin gate via header: x-admin-key
+// GET /feedback (public preview)
+app.get("/feedback", async (_req, res) => {
+    try {
+        const { rows } = await pool.query(`
+      SELECT id,
+             user_id AS "userId",
+             message,
+             sentiment->>'label' AS "sentiment",
+             sentiment->>'score' AS "score",
+             created_at AS "createdAt"
+      FROM feedback
+      ORDER BY created_at DESC
+      LIMIT 100
+    `);
+        res.json(rows);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "server_error" });
+    }
+});
+
+// GET /admin/feedback?page=&pageSize=  (requires x-admin-key)
+const { ADMIN_API_KEY = "supersecretadminkey" } = process.env;
+
 app.get("/admin/feedback", async (req, res) => {
     try {
         const key = req.header("x-admin-key");
-        if (key !== ADMIN_API_KEY) {
+        if (key !== ADMIN_API_KEY)
             return res.status(401).json({ error: "unauthorized" });
-        }
 
         const page = Math.max(1, Number(req.query.page ?? 1));
         const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize ?? 10)));
         const offset = (page - 1) * pageSize;
 
         const { rows } = await pool.query(
-            `SELECT id, user_id AS "userId", message, created_at AS "createdAt"
+            `SELECT id,
+              user_id AS "userId",
+              message,
+              sentiment->>'label' AS "sentiment",
+              sentiment->>'score' AS "score",
+              created_at AS "createdAt"
        FROM feedback
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
             [pageSize, offset]
         );
 
-        const { rows: countRows } = await pool.query(`SELECT COUNT(*)::int AS total FROM feedback`);
+        const { rows: countRows } = await pool.query(
+            `SELECT COUNT(*)::int AS total FROM feedback`
+        );
+
         res.json({
             page,
             pageSize,
@@ -131,12 +144,13 @@ app.get("/admin/feedback", async (req, res) => {
     }
 });
 
-// boot
+// --- Boot ---
+const PORT = Number(process.env.PORT || 8080);
 ensureSchema()
     .then(() => {
-        app.listen(PORT, () => {
-            console.log(`API listening on http://0.0.0.0:${PORT}`);
-        });
+        app.listen(PORT, "0.0.0.0", () =>
+            console.log(`API listening on http://0.0.0.0:${PORT}`)
+        );
     })
     .catch((e) => {
         console.error("Failed to init schema:", e);
